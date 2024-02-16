@@ -343,11 +343,11 @@ pub async fn repro_abort() -> anyhow::Result<()>{
     use libra_smoke_tests::libra_smoke::LibraSmoke;
     use std::time::Duration;
 
+    // get a clean swarm with the current framework release
     let mut smoke = LibraSmoke::new(Some(1)).await?;
     smoke.swarm.wait_all_alive(Duration::from_secs(10)).await?;
     let marlon_node = smoke.swarm.validators_mut().next().unwrap();
 
-    // 2. replace the swarm db with the brick db
     let swarm_db_path = marlon_node.config().storage.dir();
 
     marlon_node.stop();
