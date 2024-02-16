@@ -311,7 +311,6 @@ impl TwinOpts {
     // }
 }
 
-
 #[tokio::test]
 async fn test_twin_with_rando() -> anyhow::Result<()> {
     println!("Hi, I'm rando");
@@ -320,5 +319,24 @@ async fn test_twin_with_rando() -> anyhow::Result<()> {
     let prod_db_to_clone = PathBuf::from("/root/db");
 
     TwinOpts::apply_with_rando_e2e(prod_db_to_clone).await?;
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_modify_swarm() -> anyhow::Result<()> {
+    let mut smoke = TwinOpts::initialize_marlon_the_val_and_prevent_drop().await?;
+
+    let marlon_node = smoke.swarm.validators_mut().next().unwrap();
+
+    let mut cred = TwinOpts::extract_credentials(marlon_node).await?;
+    cred.account = AccountAddress::random();
+
+    dbg!(&marlon_node.log_path());
+
+    // 2. replace the swarm db with the brick db
+    let swarm_db_path = marlon_node.config().storage.dir();
+
+    let genesis_blob_path = TwinOpts::make_rescue_twin_blob(&swarm_db_path, &cred).await?;
+    assert!(genesis_blob_path.exists(), "no rescue blob created");
     Ok(())
 }

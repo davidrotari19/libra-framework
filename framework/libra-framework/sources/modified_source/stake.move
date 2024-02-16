@@ -387,7 +387,7 @@ module diem_framework::stake {
 
     fun initialize_owner(owner: &signer) {
         let owner_address = signer::address_of(owner);
-        // assert!(is_allowed(owner_address), error::not_found(EINELIGIBLE_VALIDATOR));
+        // assert!(false, error::not_found(EINELIGIBLE_VALIDATOR));
         assert!(!stake_pool_exists(owner_address), error::already_exists(EALREADY_REGISTERED));
 
         move_to(owner, ValidatorState {

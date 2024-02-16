@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path};
 
 use anyhow::{format_err, Context};
 
@@ -13,6 +13,7 @@ use diem_types::{account_address::AccountAddress, transaction::ChangeSet};
 use diem_vm::move_vm_ext::{MoveVmExt, SessionExt, SessionId};
 use diem_vm_types::change_set::VMChangeSet;
 use libra_framework::head_release_bundle;
+
 use move_core_types::{
     ident_str,
     language_storage::{StructTag, CORE_CODE_ADDRESS},
@@ -323,4 +324,41 @@ fn meta_test_open_db_sync() -> anyhow::Result<()> {
     let mvm = dvm.internals().move_vm();
     let _session = mvm.new_session(&adapter, s_id, false);
     Ok(())
+}
+
+
+
+#[tokio::test]
+// see:
+// framework/libra-framework/sources/repro_deserialize.move
+// You will see this error:
+
+// Error: Unexpected VM Error Running Rescue VM Session: VMError with status
+// FAILED_TO_DESERIALIZE_RESOURCE at location Module ModuleId { address:
+// 0000000000000000000000000000000000000000000000000000000000000001, name:
+// Identifier("repro_deserialize") } and message Failed to deserialize resource
+
+
+pub async fn repro_abort() -> anyhow::Result<()>{
+    use libra_smoke_tests::libra_smoke::LibraSmoke;
+    use std::time::Duration;
+
+    let mut smoke = LibraSmoke::new(Some(1)).await?;
+    smoke.swarm.wait_all_alive(Duration::from_secs(10)).await?;
+    let marlon_node = smoke.swarm.validators_mut().next().unwrap();
+
+    // 2. replace the swarm db with the brick db
+    let swarm_db_path = marlon_node.config().storage.dir();
+
+    marlon_node.stop();
+
+    let _vmc = libra_run_session(
+      &swarm_db_path,
+      |session| {
+            libra_execute_session_function(session, "0x1::repro_deserialize::should_not_abort", vec![])
+      },
+      None,
+  )?;
+
+  Ok(())
 }
