@@ -1,4 +1,4 @@
-use std::{path::Path};
+use std::path::Path;
 
 use anyhow::{format_err, Context};
 
@@ -57,7 +57,6 @@ where
     .unwrap();
 
     let db_rw = DbReaderWriter::new(db);
-
     let v = db_rw.reader.get_latest_version().unwrap();
 
     let view = db_rw.reader.state_view_at_version(Some(v)).unwrap();
@@ -327,19 +326,9 @@ fn meta_test_open_db_sync() -> anyhow::Result<()> {
 }
 
 
-
 #[tokio::test]
-// see:
-// framework/libra-framework/sources/repro_deserialize.move
-// You will see this error:
-
-// Error: Unexpected VM Error Running Rescue VM Session: VMError with status
-// FAILED_TO_DESERIALIZE_RESOURCE at location Module ModuleId { address:
-// 0000000000000000000000000000000000000000000000000000000000000001, name:
-// Identifier("repro_deserialize") } and message Failed to deserialize resource
-
-
-pub async fn repro_abort() -> anyhow::Result<()>{
+pub async fn create_fixture() -> anyhow::Result<()> {
+    use fs_extra::dir;
     use libra_smoke_tests::libra_smoke::LibraSmoke;
     use std::time::Duration;
 
@@ -352,13 +341,42 @@ pub async fn repro_abort() -> anyhow::Result<()>{
 
     marlon_node.stop();
 
-    let _vmc = libra_run_session(
-      &swarm_db_path,
-      |session| {
-            libra_execute_session_function(session, "0x1::repro_deserialize::should_not_abort", vec![])
-      },
-      None,
-  )?;
+    let p = Path::new("/root/db/");
 
-  Ok(())
+    // fs::create_dir(p).unwrap();
+    let options = dir::CopyOptions::new(); //Initialize default values for CopyOptions
+
+    // move source/dir1 to target/dir1
+    dir::move_dir(&swarm_db_path, &p, &options)?;
+
+
+    Ok(())
+}
+
+
+#[tokio::test]
+// see:
+// framework/libra-framework/sources/repro_deserialize.move
+// You will see this error:
+
+// Error: Unexpected VM Error Running Rescue VM Session: VMError with status
+// FAILED_TO_DESERIALIZE_RESOURCE at location Module ModuleId { address:
+// 0000000000000000000000000000000000000000000000000000000000000001, name:
+// Identifier("repro_deserialize") } and message Failed to deserialize resource
+
+pub async fn repro_abort() -> anyhow::Result<()> {
+
+    let p = Path::new("/root/db/");
+
+
+      let _vmc = libra_run_session(
+        p,
+        |session| {
+              libra_execute_session_function(session, "0x1::repro_deserialize::should_not_abort", vec![])
+              // Ok(())
+        },
+        None,
+    )?;
+
+    Ok(())
 }

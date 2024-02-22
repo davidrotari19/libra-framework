@@ -6,6 +6,24 @@
   // target/debug/ol-genesis-tools --fork --output-path /opt/genesis_from_snapshot.blob --snapshot-path /Users/gsimsek/code/libra-main/ol/devnet/snapshot/state_ver_267.54ab`
   "configurations": [
     {
+      "name": "debug",
+      "type": "lldb",
+      "request": "launch",
+      "cargo": {
+        "args": [
+          "test",
+          "repro_abort",
+        ],
+      },
+      "args": [
+        "--nocapture"
+      ],
+      "cwd": "${workspaceFolder}/tools/rescue/src/",
+      "env": {
+        "DIEM_FORGE_NODE_BIN_PATH": "/root/.cargo/bin/diem-node"
+      },
+    },
+    {
       "name": "rescue-script",
       "type": "lldb",
       "request": "launch",
