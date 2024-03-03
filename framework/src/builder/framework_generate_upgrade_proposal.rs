@@ -28,6 +28,7 @@ pub fn make_framework_upgrade_artifacts(
     proposal_move_package_dir: &Path,
     framework_local_dir: &Path,
     core_modules: &Option<Vec<String>>,
+    force_incompatible_upgrade: bool,
 ) -> Result<Vec<(String, String)>> {
     let framework_git_hash =
         &get_framework_git_head(framework_local_dir).unwrap_or("none".to_owned());
@@ -57,7 +58,7 @@ pub fn make_framework_upgrade_artifacts(
         // We first need to compile and build each CORE MODULE we are upgrading (e.g. MoveStdlib, LibraFramework)
 
         let options = BuildOptions {
-            with_srcs: true, // this will store the source bytes on chain, as in genesis
+            with_srcs: false, // this will store the source bytes on chain, as in genesis
             with_abis: false,
             with_source_maps: false,
             with_error_map: true,
@@ -73,7 +74,12 @@ pub fn make_framework_upgrade_artifacts(
         );
 
         let compiled_core_module_pack = BuiltPackage::build(core_module_dir.clone(), options)?;
-        let release = ReleasePackage::new(compiled_core_module_pack)?;
+        let mut release = ReleasePackage::new(compiled_core_module_pack)?;
+
+        // DANGER: if 0x1 needs to force an incompatible upgrade
+        if force_incompatible_upgrade {
+            release.metadata.upgrade_policy.policy = 0;
+        }
 
         // Each GOVERNANCE SCRIPT needs its own Move module directory even if temporarily, to compile the code for later submission (and getting the transaction hash, more below).
 

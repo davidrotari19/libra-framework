@@ -1,9 +1,15 @@
 use crate::{
-    account_queries::{get_account_balance_libra, get_tower_state, get_val_config},
-    chain_queries::get_epoch,
+    account_queries::{
+        community_wallet_pending_transactions, community_wallet_signers, get_account_balance_libra,
+        get_events, get_tower_state, get_transactions, get_val_config,
+        is_community_wallet_migrated,
+    },
+    chain_queries::{get_epoch, get_height},
     query_view::get_view,
 };
 use anyhow::{bail, Context, Result};
+use diem_api_types::Transaction;
+use diem_debugger::DiemDebugger;
 use diem_sdk::{rest_client::Client, types::account_address::AccountAddress};
 use indoc::indoc;
 use libra_types::exports::AuthenticationKey;
@@ -84,11 +90,57 @@ pub enum QueryType {
         #[clap(short, long)]
         auth_key: AuthenticationKey, // we use account address to parse, because that's the format needed to lookup users. AuthKeys and AccountAddress are the same formats.
     },
+    /// Network block height
+    BlockHeight,
     /// How far behind the local is from the upstream nodes
     SyncDelay,
+    /// Get events
+    Events {
+        #[clap(short, long)]
+        /// account to query events
+        account: AccountAddress,
+        #[clap(short, long)]
+        /// switch for withdrawn or deposited events.
+        withdrawn_or_deposited: bool,
+        #[clap(short, long)]
+        /// what event sequence number to start querying from, if DB does not have all.
+        seq_start: Option<u64>,
+    },
+    /// Get transaction history
+    Txs {
+        #[clap(short, long)]
+        /// account to query txs of
+        account: AccountAddress,
+        #[clap(long)]
+        /// get transactions after this height
+        txs_height: Option<u64>,
+        #[clap(long)]
+        /// limit how many txs
+        txs_count: Option<u64>,
+        #[clap(long)]
+        /// filter by type
+        txs_type: Option<String>,
+    },
+    /// Is the community wallter migrated
+    ComWalletMigrated {
+        #[clap(short, long)]
+        /// account to query txs of
+        account: AccountAddress,
+    },
+    /// Signers of the community wallet
+    ComWalletSigners {
+        #[clap(short, long)]
+        /// account to query txs of
+        account: AccountAddress,
+    },
+    /// Get the community wallet's pending transactions
+    ComWalletPendTransactions {
+        #[clap(short, long)]
+        /// account to query txs of
+        account: AccountAddress,
+    },
     // TODO:
-    // /// Network block height
-    // BlockHeight,
+
     // /// Get transaction history
     // Txs {
     //     #[clap(short, long)]
@@ -113,6 +165,9 @@ pub enum QueryType {
     //     /// what event sequence number to start querying from, if DB does not have all.
     //     seq_start: Option<u64>,
     // },
+    Annotate {
+        account: AccountAddress,
+    },
 }
 
 impl QueryType {
@@ -180,9 +235,76 @@ impl QueryType {
                   "validator_index": res.validator_index,
                 }))
             }
+            QueryType::BlockHeight => {
+                let height = get_height(&client).await?;
+                Ok(json!({ "BlockHeight": height }))
+            }
+            QueryType::Events {
+                account,
+                withdrawn_or_deposited,
+                seq_start,
+            } => {
+                let res =
+                    get_events(&client, *account, *withdrawn_or_deposited, *seq_start).await?;
+                Ok(json!({ "events": res }))
+            }
+            QueryType::Txs {
+                account,
+                txs_height,
+                txs_count,
+                txs_type,
+            } => {
+                let res: Vec<Transaction> = get_transactions(
+                    &client,
+                    *account,
+                    *txs_height,
+                    *txs_count,
+                    txs_type.to_owned(),
+                )
+                .await?;
+                let prune_res: Vec<_> = res
+                    .iter()
+                    .map(|tx| {
+                        json!({
+                        "timestamp": tx.timestamp(),
+                        "version" : tx.version(),
+                        "is_pending" : tx.is_pending(),
+                        })
+                    })
+                    .collect();
+                Ok(json!({ "transactions": prune_res }))
+            }
+            QueryType::ComWalletMigrated { account } => {
+                let res = is_community_wallet_migrated(&client, *account).await?;
+                Ok(json!({ "migrated": res }))
+            }
+            QueryType::ComWalletSigners { account } => {
+                // Wont work at the moment as there is no community wallet that with governace structure
+                let _res = community_wallet_signers(&client, *account).await?;
+                Ok(json!({ "signers": "None"}))
+            }
+            QueryType::ComWalletPendTransactions { account } => {
+                // Wont work at the moment as there is no community wallet migrated
+                let _res = community_wallet_pending_transactions(&client, *account).await?;
+                Ok(json!({ "pending_transactions": "None" }))
+            }
+            QueryType::Annotate { account } => {
+                let dbgger = DiemDebugger::rest_client(client)?;
+                let version = dbgger.get_latest_version().await?;
+                let blob = dbgger
+                    .annotate_account_state_at_version(account.to_owned(), version)
+                    .await?;
+                if blob.is_none() {
+                    bail!("cannot find account state at {}", account)
+                };
+                // dbg!(&blob.unwrap());
+                // blob.unwrap().to_string();
+                let pretty = format!("{:#}", blob.unwrap().to_string());
+                Ok(json!(pretty))
+            }
             _ => {
                 bail!(
-                    "Not implemented for type: {:?}\n Ground control to major tom.",
+                    "Not implemented for type: {:?}\n Ground control to Major Tom.",
                     self
                 )
             }
