@@ -54,3 +54,5 @@ diem-api-types = { workspace = true }
 diem-logger = { workspace = true }
 regex = { workspace = true }
 serde_json = { workspace = true }
+diem-validator-interface = { workspace = true }
+diem-debugger = { workspace = true }

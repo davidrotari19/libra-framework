@@ -106,6 +106,7 @@ diem-storage-interface = { path = "../diem/storage/storage-interface" }
 diem-temppath = { path = "../diem/crates/diem-temppath" }
 diem-transactional-test-harness = { path = "../diem/diem-move/diem-transactional-test-harness" }
 diem-types = { path = "../diem/types" }
+diem-validator-interface = { path = "../diem/diem-move/diem-validator-interface"}
 diem-vm = { path = "../diem/diem-move/diem-vm" }
 diem-vm-genesis = { path = "../diem/diem-move/vm-genesis" }
 diem-vm-types = { path = "../diem/diem-move/diem-vm-types" }

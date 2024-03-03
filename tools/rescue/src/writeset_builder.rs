@@ -120,7 +120,9 @@ where
         TimedFeatures::enable_all(),
     )
     .unwrap();
+
     let state_view_storage = StorageAdapter::new(state_view);
+    dbg!(&state_view_storage.id());
     let change_set = {
         // TODO: specify an id by human and pass that in.
         let genesis_id = HashValue::zero();
@@ -129,9 +131,9 @@ where
             SessionId::genesis(genesis_id),
             true,
         ));
-        session.disable_reconfiguration();
+        // session.disable_reconfiguration();
         procedure(&mut session);
-        session.enable_reconfiguration();
+        // session.enable_reconfiguration();
         session
             .0
             .finish(
@@ -148,3 +150,32 @@ where
     let (write_set, _delta_change_set, events) = change_set.unpack();
     ChangeSet::new(write_set, events)
 }
+
+
+    pub fn exec_func(
+        session: &mut SessionExt,
+        module_name: &str,
+        function_name: &str,
+        ty_args: Vec<TypeTag>,
+        args: Vec<Vec<u8>>,
+    ) {
+        session
+            .execute_function_bypass_visibility(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new(module_name).unwrap(),
+                ),
+                &Identifier::new(function_name).unwrap(),
+                ty_args,
+                args,
+                &mut UnmeteredGasMeter,
+            )
+            .unwrap_or_else(|e| {
+                panic!(
+                    "Error calling {}.{}: {}",
+                    module_name,
+                    function_name,
+                    e.into_vm_status()
+                )
+            });
+    }

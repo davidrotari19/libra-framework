@@ -12,7 +12,7 @@
       "cargo": {
         "args": [
           "test",
-          "repro_abort",
+          "repro_alt",
         ],
       },
       "args": [
