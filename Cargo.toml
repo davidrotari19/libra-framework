@@ -356,6 +356,7 @@ move-core-types = { path = "../diem/third_party/move/move-core/types"  }
 move-command-line-common = { path = "../diem/third_party/move/move-command-line-common"  }
 move-compiler = { path = "../diem/third_party/move/move-compiler"  }
 move-model = { path = "../diem/third_party/move/move-model"  }
+move-vm-runtime = { path = "../diem/third_party/move/move-vm/runtime"  }
 move-vm-test-utils = { path = "../diem/third_party/move/move-vm/test-utils"  }
 move-vm-types = { path = "../diem/third_party/move/move-vm/types"  }
 
