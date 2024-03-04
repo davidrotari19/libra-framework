@@ -6,12 +6,11 @@ use diem_config::config::{
     NO_OP_STORAGE_PRUNER_CONFIG,
 };
 use diem_db::DiemDB;
-use diem_debugger::DiemDebugger;
 use diem_state_view::TStateView;
 use diem_storage_interface::{state_view::DbStateViewAtVersion, DbReaderWriter};
-use diem_vm::move_vm_ext::SessionExt;
+
 use libra_smoke_tests::libra_smoke::LibraSmoke;
-use rescue::writeset_builder::{self, build_changeset, GenesisSession};
+use rescue::writeset_builder::{build_changeset, GenesisSession};
 
 use diem_validator_interface::{DBDebuggerInterface, DebuggerStateView, DiemValidatorInterface};
 
@@ -73,39 +72,11 @@ pub async fn repro_alt_w_debugger_interface() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[tokio::test]
-pub async fn repro_alt_w_diem_debugger() -> anyhow::Result<()> {
-    let swarm_db_path: &Path = Path::new("/root/swarm_db/");
-
-    let debug = DiemDebugger::db(swarm_db_path)?;
-
-    let version = debug.get_latest_version().await?;
-    dbg!(&version);
-
-    debug.run_session_at_version(version, |session| {
-      writeset_builder::exec_func(session, "repro_deserialize", "should_not_abort", vec![], vec![]);
-      Ok(())
-    })?;
-    // let _changeset = build_changeset(&state_view, repro, 1);
-
-    println!("session run sucessfully");
-    Ok(())
-}
-
-fn noop(_session: &mut GenesisSession) {
+fn _noop(_session: &mut GenesisSession) {
     dbg!("hi");
 }
 
 fn repro(session: &mut GenesisSession) {
     session.exec_func("epoch_helper", "get_current_epoch", vec![], vec![]);
     session.exec_func("repro_deserialize", "should_not_abort", vec![], vec![])
-    // libra_execute_session_function(session, "0x1::repro_deserialize::should_not_abort", vec![])
 }
-
-// fn test(session: &mut SessionExt) -> Result<(), VMError>{
-//     writeset_builder::exec_func(session, "epoch_helper", "get_current_epoch", vec![], vec![]);
-//     writeset_builder::exec_func(session, "repro_deserialize", "should_not_abort", vec![], vec![]);
-//     // libra_execute_session_function(session,
-//     // "0x1::repro_deserialize::should_not_abort", vec![])
-//     Ok(())
-// }

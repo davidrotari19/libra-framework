@@ -113,7 +113,7 @@ impl TwinOpts {
         println!("bootstrapping db with rescue.blob");
 
         let genesis_transaction = {
-            let buf = fs::read(&genesis_blob_path).unwrap();
+            let buf = fs::read(genesis_blob_path).unwrap();
             bcs::from_bytes::<Transaction>(&buf).unwrap()
         };
 
@@ -193,7 +193,7 @@ impl TwinOpts {
             ManuallyDrop::drop(&mut smoke);
         }
 
-        return Ok(());
+        Ok(())
     }
 
     /// from an initialized swarm state, extract one node's credentials
@@ -263,11 +263,11 @@ impl TwinOpts {
         let options = dir::CopyOptions::new(); //Initialize default values for CopyOptions
 
         // move source/dir1 to target/dir1
-        dir::move_dir(&swarm_db, &swarm_old_path, &options)?;
+        dir::move_dir(swarm_db, &swarm_old_path, &options)?;
         assert!(!swarm_db.exists());
 
-        fs::create_dir(&swarm_db);
-        dir::copy(&prod_db, &swarm_db.parent().unwrap(), &options)?;
+        fs::create_dir(swarm_db);
+        dir::copy(prod_db, swarm_db.parent().unwrap(), &options)?;
 
         println!("db copied");
         Ok(())

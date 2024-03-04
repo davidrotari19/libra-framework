@@ -76,7 +76,7 @@ impl<'r, 'l> GenesisSession<'r, 'l> {
             .unwrap()
     }
 
-    fn disable_reconfiguration(&mut self) {
+    fn _disable_reconfiguration(&mut self) {
         self.exec_func(
             "Reconfiguration",
             "disable_reconfiguration",
@@ -85,7 +85,7 @@ impl<'r, 'l> GenesisSession<'r, 'l> {
         )
     }
 
-    fn enable_reconfiguration(&mut self) {
+    fn _enable_reconfiguration(&mut self) {
         self.exec_func(
             "Reconfiguration",
             "enable_reconfiguration",
@@ -151,31 +151,30 @@ where
     ChangeSet::new(write_set, events)
 }
 
-
-    pub fn exec_func(
-        session: &mut SessionExt,
-        module_name: &str,
-        function_name: &str,
-        ty_args: Vec<TypeTag>,
-        args: Vec<Vec<u8>>,
-    ) {
-        session
-            .execute_function_bypass_visibility(
-                &ModuleId::new(
-                    account_config::CORE_CODE_ADDRESS,
-                    Identifier::new(module_name).unwrap(),
-                ),
-                &Identifier::new(function_name).unwrap(),
-                ty_args,
-                args,
-                &mut UnmeteredGasMeter,
+pub fn exec_func(
+    session: &mut SessionExt,
+    module_name: &str,
+    function_name: &str,
+    ty_args: Vec<TypeTag>,
+    args: Vec<Vec<u8>>,
+) {
+    session
+        .execute_function_bypass_visibility(
+            &ModuleId::new(
+                account_config::CORE_CODE_ADDRESS,
+                Identifier::new(module_name).unwrap(),
+            ),
+            &Identifier::new(function_name).unwrap(),
+            ty_args,
+            args,
+            &mut UnmeteredGasMeter,
+        )
+        .unwrap_or_else(|e| {
+            panic!(
+                "Error calling {}.{}: {}",
+                module_name,
+                function_name,
+                e.into_vm_status()
             )
-            .unwrap_or_else(|e| {
-                panic!(
-                    "Error calling {}.{}: {}",
-                    module_name,
-                    function_name,
-                    e.into_vm_status()
-                )
-            });
-    }
+        });
+}

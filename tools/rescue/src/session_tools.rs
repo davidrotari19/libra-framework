@@ -325,7 +325,6 @@ fn meta_test_open_db_sync() -> anyhow::Result<()> {
     Ok(())
 }
 
-
 #[tokio::test]
 pub async fn create_fixture() -> anyhow::Result<()> {
     use fs_extra::dir;
@@ -347,12 +346,10 @@ pub async fn create_fixture() -> anyhow::Result<()> {
     let options = dir::CopyOptions::new(); //Initialize default values for CopyOptions
 
     // move source/dir1 to target/dir1
-    dir::move_dir(&swarm_db_path, &p, &options)?;
-
+    dir::move_dir(swarm_db_path, p, &options)?;
 
     Ok(())
 }
-
 
 #[tokio::test]
 // see:
@@ -365,15 +362,17 @@ pub async fn create_fixture() -> anyhow::Result<()> {
 // Identifier("repro_deserialize") } and message Failed to deserialize resource
 
 pub async fn repro_abort() -> anyhow::Result<()> {
-
     let p = Path::new("/root/db/");
 
-
-      let _vmc = libra_run_session(
+    let _vmc = libra_run_session(
         p,
         |session| {
-              libra_execute_session_function(session, "0x1::repro_deserialize::should_not_abort", vec![])
-              // Ok(())
+            libra_execute_session_function(
+                session,
+                "0x1::repro_deserialize::should_not_abort",
+                vec![],
+            )
+            // Ok(())
         },
         None,
     )?;
