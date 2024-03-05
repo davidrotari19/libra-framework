@@ -13,4 +13,10 @@ public fun should_not_abort() {
   let a = exists<Noop>(@0xabc);
   print(&a);
 }
+
+public entry fun maybe_aborts(addr: address) {
+  // this causes a Dump since 0xabc does not exist yet.
+  let a = exists<Noop>(addr);
+  print(&a);
+}
 }

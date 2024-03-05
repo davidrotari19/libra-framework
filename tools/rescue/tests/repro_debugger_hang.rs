@@ -2,7 +2,8 @@ use diem_debugger::DiemDebugger;
 use libra_smoke_tests::libra_smoke::LibraSmoke;
 use std::path::PathBuf;
 
-#[tokio::test]
+// #[tokio::test]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 pub async fn repro_debugger_hangs() -> anyhow::Result<()> {
     // get a clean swarm db with current framework
     let mut smoke = LibraSmoke::new(None).await?;
@@ -21,7 +22,7 @@ pub async fn repro_debugger_hangs() -> anyhow::Result<()> {
     let s = debug
         .annotate_account_state_at_version("0x1".parse()?, version)
         .await?;
-    dbg!(&s);
+    dbg!(&s.is_some());
 
     Ok(())
 }
