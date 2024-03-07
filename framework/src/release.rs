@@ -94,10 +94,10 @@ impl ReleaseTarget {
             .collect::<Vec<_>>();
         ReleaseOptions {
             build_options: BuildOptions {
-                dev: false,
+                dev: true,
                 with_srcs,
                 with_abis: true,
-                with_source_maps: false,
+                with_source_maps: true,
                 with_error_map: true,
                 named_addresses: Default::default(),
                 install_dir: None,
