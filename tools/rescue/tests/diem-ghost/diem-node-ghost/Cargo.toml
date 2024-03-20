@@ -1,0 +1,6 @@
+[package]
+name = "diem-node-ghost"
+version = "0.1.0"
+
+[dependencies]
+diem-node = { workspace = true }
